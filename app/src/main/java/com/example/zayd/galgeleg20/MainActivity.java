@@ -23,15 +23,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
 
-    Galgelogik galgelogik = new Galgelogik();
+    public  static Galgelogik galgelogik = new Galgelogik();
 
     private TextView info, ordDR;
     private Button spilKnap, Genstart;
     private EditText text;
     private ImageView img;
     private ListView listView;
-    private SharedPreferences sharedPreferences;
-    private SharedPreferences.Editor editor;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ordDR = (TextView) findViewById(R.id.textInfoDR);
         listView = (ListView) findViewById(R.id.listViewDR);
 
-       sharedPreferences= getSharedPreferences("com.example.zayd.galgeleg20.PREFENCES_FILE_KEY", Context.MODE_PRIVATE);
+
 
         ordDR.setText("fra DR´s server....");
 
@@ -64,8 +63,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             @Override
-            protected void onPostExecute(Object res) {
-                ordDR.setText("res: \n " + res);
+            protected void onPostExecute(Object resultat) {
+                ordDR.setText("resultat: \n " + resultat);
 
             }
         }.execute();
@@ -87,12 +86,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         spilKnap.setOnClickListener(this);
         Genstart.setOnClickListener(this);
-
-        int spilletgammel= sharedPreferences.getInt("spillet", 0);
-
-        editor = sharedPreferences.edit();
-        editor.putInt("spillet", 1 + spilletgammel);
-        editor.apply();
 
         spilKnap.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -153,14 +146,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-//     S.O.S     har bruge for hjælp  fra linje 101 til 161
 
-
-     //  String ord = galgelogik.hentOrd(position );
-     //  galgelogik.skiftOrd(ord);
-        galgelogik.nulstil();
         opdaterSkærm();
-        ordDR.setVisibility(listView.GONE);
+
 
     }
 
@@ -223,29 +211,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         info.setText("Gæt ordet: "+ galgelogik.getSynligtOrd());
         info.append("\n\n Du har "+ galgelogik.getAntalForkerteBogstaver() + "forkerte" + galgelogik.getBrugteBogstaver());
 
+
         if (galgelogik.erSpilletVundet()){
             info.append("\n Du har vundet ");
-            int spilletgammel= sharedPreferences.getInt("Spillet",0) ;
-            int vundetgammel= sharedPreferences.getInt("Vundet",0);
-
-
-            editor= sharedPreferences.edit();
-            editor.putInt("Vundet", 1+ vundetgammel);
-            editor.putInt("spillet", 1+ spilletgammel);
-            editor.apply();
-            Toast.makeText(MainActivity.this, "Du har vundet"+ sharedPreferences.getInt("Vundet",0)+ "ud af"+ sharedPreferences.getInt("Spillet",0),
-                  Toast.LENGTH_SHORT).show();
-
-
-
+            Intent intent = new Intent(this, Finito.class);
+            intent.putExtra("Vundet","Du har vundet");
+            startActivity(intent);
+            galgelogik.nulstil();
 
         }
 
         if (galgelogik.erSpilletTabt()){
             info.setText("Du har tabt prøv igen, ordet var: "+ galgelogik.getOrdet());
-            Toast.makeText(MainActivity.this, "Du har vundet"+ sharedPreferences.getInt
-                    ("Vundet",0)+" ud af"+ sharedPreferences.getInt("Spillet",0),
-                    Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, Finito.class);
+            intent.putExtra("Vundet","Du har vundet");
+            startActivity(intent);
         }
 
 
