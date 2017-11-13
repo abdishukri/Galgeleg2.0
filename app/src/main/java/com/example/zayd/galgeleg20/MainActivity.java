@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.AdapterView;
@@ -22,7 +23,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
 
-    Galgelogik G= new Galgelogik();
+    Galgelogik galgelogik = new Galgelogik();
 
     private TextView info, ordDR;
     private Button spilKnap, Genstart;
@@ -53,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             protected Object doInBackground(Object... arg0) {
                 try {
-                    G.hentOrdFraDr();
+                    galgelogik.hentOrdFraDr();
                     return "korrekt hentet fra DR´s server";
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -69,13 +70,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }.execute();
 
-        info.setText("Velkommen til mit spændende spil" + "\n Du skal gætte dette ord: " + G.getSynligtOrd() +
+        info.setText("Velkommen til mit spændende spil" + "\n Du skal gætte dette ord: " + galgelogik.getSynligtOrd() +
                 "\n Skrive et bogstav herunder og tryk spil.\n");
         String velkomst = getIntent().getStringExtra("velkomst");
         if (velkomst != null)
             info.append(velkomst);
 
-        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, android.R.id.text1, G.muligeOrd);
+        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, android.R.id.text1, galgelogik.muligeOrd);
         listView.setOnItemClickListener(this);
         listView.setAdapter(adapter);
 
@@ -91,18 +92,73 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         editor = sharedPreferences.edit();
         editor.putInt("spillet", 1 + spilletgammel);
-        editor.commit();
+        editor.apply();
 
-    }
+        spilKnap.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("State", String.valueOf(galgelogik.getAntalForkerteBogstaver()));
+
+
+                //Toast.makeText(MainActivity.this, galgelogik.getAntalForkerteBogstaver(), Toast.LENGTH_SHORT);
+
+
+                galgelogik.gætBogstav(String.valueOf(text.getText()));
+
+                String bogstav = text.getText().toString();
+                if (bogstav.length() != 1)
+
+                {
+                    text.setError("Skriv et bogstav");
+                    return;
+                }
+
+                switch (galgelogik.getAntalForkerteBogstaver()) {
+                    case 1:
+                        img.setImageResource(R.drawable.forkert1);
+                        break;
+
+                    case 2:
+                        img.setImageResource(R.drawable.forkert2);
+                        break;
+
+                    case 3:
+                        img.setImageResource(R.drawable.forkert3);
+                        break;
+
+                    case 4:
+                        img.setImageResource(R.drawable.forkert4);
+                        break;
+
+
+                    case 5:
+                        img.setImageResource(R.drawable.forkert5);
+                        break;
+                    case 6:
+                        img.setImageResource(R.drawable.forkert6);
+                        break;
+                }
+                text.setText("");
+                text.setError(null);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    spilKnap.animate().rotationBy(2* 360).setInterpolator(new DecelerateInterpolator());
+
+
+                }
+                opdaterSkærm();
+
+            }
+       });
+}
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
 //     S.O.S     har bruge for hjælp  fra linje 101 til 161
 
 
-       String ord = G.hentOrd(position );
-       G.skiftOrd(ord);
-        G.nulstil();
+     //  String ord = galgelogik.hentOrd(position );
+     //  galgelogik.skiftOrd(ord);
+        galgelogik.nulstil();
         opdaterSkærm();
         ordDR.setVisibility(listView.GONE);
 
@@ -126,8 +182,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 text.setError("Skriv et bogstav");
                 return;
             }
-            G.getAntalForkerteBogstaver();
-            switch (G.getAntalForkerteBogstaver()) {
+            galgelogik.getAntalForkerteBogstaver();
+            switch (galgelogik.getAntalForkerteBogstaver()) {
 
                 case 1:
                     img.setImageResource(R.drawable.forkert1);
@@ -158,16 +214,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             text.setError(null);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                spilKnap.animate().rotationBy(2* 160).setInterpolator(new DecelerateInterpolator());
+                spilKnap.animate().rotationBy(2* 360).setInterpolator(new DecelerateInterpolator());
             }
             opdaterSkærm();
         }
     }
     private void opdaterSkærm() {
-        info.setText("Gæt ordet: "+ G.getSynligtOrd());
-        info.append("\n\n Du har "+ G.getAntalForkerteBogstaver() + "forkerte" + G.getBrugteBogstaver());
+        info.setText("Gæt ordet: "+ galgelogik.getSynligtOrd());
+        info.append("\n\n Du har "+ galgelogik.getAntalForkerteBogstaver() + "forkerte" + galgelogik.getBrugteBogstaver());
 
-        if (G.erSpilletVundet()){
+        if (galgelogik.erSpilletVundet()){
             info.append("\n Du har vundet ");
             int spilletgammel= sharedPreferences.getInt("Spillet",0) ;
             int vundetgammel= sharedPreferences.getInt("Vundet",0);
@@ -176,7 +232,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             editor= sharedPreferences.edit();
             editor.putInt("Vundet", 1+ vundetgammel);
             editor.putInt("spillet", 1+ spilletgammel);
-            editor.commit();
+            editor.apply();
             Toast.makeText(MainActivity.this, "Du har vundet"+ sharedPreferences.getInt("Vundet",0)+ "ud af"+ sharedPreferences.getInt("Spillet",0),
                   Toast.LENGTH_SHORT).show();
 
@@ -185,8 +241,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         }
 
-        if (G.erSpilletTabt()){
-            info.setText("Du har tabt prøv igen, ordet var: "+ G.getOrdet());
+        if (galgelogik.erSpilletTabt()){
+            info.setText("Du har tabt prøv igen, ordet var: "+ galgelogik.getOrdet());
             Toast.makeText(MainActivity.this, "Du har vundet"+ sharedPreferences.getInt
                     ("Vundet",0)+" ud af"+ sharedPreferences.getInt("Spillet",0),
                     Toast.LENGTH_SHORT).show();
